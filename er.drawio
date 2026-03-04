@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 YaBrowser/25.12.0.0 Safari/537.36" version="29.5.3">
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Linux x86_64; rv:145.0) Gecko/20100101 Firefox/145.0" version="29.6.0">
   <diagram id="8w1-2ICS-GbuRIqK_8eH" name="Страница-1">
-    <mxGraphModel dx="4589" dy="1787" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="2073" dy="680" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -315,7 +315,7 @@
         <mxCell id="342" edge="1" parent="1" source="200" style="endArrow=ERmany;startArrow=ERmandOne;exitX=1;exitY=0.5;entryX=0;entryY=0.5;edgeStyle=orthogonalEdgeStyle;" target="219" value="принимает работу по">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="345" edge="1" parent="1" source="247" style="endArrow=ERmany;startArrow=ERone;entryX=0;entryY=0.5;edgeStyle=orthogonalEdgeStyle;dashed=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;" target="41" value="руководит">
+        <mxCell id="345" edge="1" parent="1" source="247" style="endArrow=ERmany;startArrow=ERone;entryX=0;entryY=0.5;edgeStyle=orthogonalEdgeStyle;dashed=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;" target="41" value="работает в">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="480" y="84" as="sourcePoint" />
           </mxGeometry>
