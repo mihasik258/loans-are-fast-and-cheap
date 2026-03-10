@@ -136,18 +136,28 @@ def generate():
     plans = []
     plan_cnt = 100
     for li in range(N_LOAN):
-        np = random.randint(1,4)
+        loan_type = loans[li][3]
+        loan_days = loans[li][4]
+        loan_end_date = loans[li][5]
+        loan_amt = loans[li][2]
+        loan_pct_rate = loans[li][6]
         d0 = datetime.strptime(loans[li][1],"%Y-%m-%d")
         accs = [e[0] for e in emps if e[11]==2]
         acc = random.choice(accs) if accs else 2
+        
+        np = 1 if loan_type == "Единовременный" else random.randint(2, 4)
         for p in range(np):
-            pd = (d0+timedelta(days=int(loans[li][4]*(p+1)/np))).strftime("%Y-%m-%d")
-            base = round(loans[li][2]/np,2)
-            pct = round(base*loans[li][6]*loans[li][4]/np/100,2)
-            pen = round(random.uniform(0,5000),2) if random.random()<.2 else 0
+            if loan_type == "Единовременный":
+                pd = loan_end_date
+            else:
+                pd = (d0 + timedelta(days=int(loan_days * (p + 1) / np))).strftime("%Y-%m-%d")
+                
+            base = round(loan_amt / np, 2)
+            pct = round(base * loan_pct_rate * loan_days / np / 100, 2)
+            pen = round(random.uniform(0, 5000), 2) if random.random() < .2 else 0
             st = random.choice(PLAN_STATUSES)
-            pid = random.randint(100,N_PAYMENT+99) if st=="Оплачено" and random.random()<.7 else None
-            plans.append((plan_cnt, pd, base, pct, pen, st, li+100, acc, pid, random.randint(1,3)))
+            pid = random.randint(100, N_PAYMENT + 99) if st == "Оплачено" and random.random() < .7 else None
+            plans.append((plan_cnt, pd, base, pct, pen, st, li + 100, acc, pid, random.randint(1, 3)))
             plan_cnt += 1
     ins("План_выплат", ["ID_Плана", "Плановая_дата_оплаты","Остаток_погашения_основы",
                          "Остаток_погашения_процентов","Остаток_погашения_штрафа",
@@ -169,24 +179,30 @@ def generate():
          "ID_Агентства","ID_Бухгалтера","ID_Плана"], ctrs)
 
     tables_seqs = [
-        ("Адрес", "ID_Адреса"),
-        ("Тип_отделения", "ID_Типа"),
-        ("Должность", "ID_Должности"),
-        ("Тип_начисления", "ID_Типа_начисления"),
-        ("Категория_клиента", "ID_Категории"),
-        ("Отделение", "ID_Отделения"),
-        ("Сотрудник", "ID_Сотрудника"),
-        ("Клиент", "ID_Клиента"),
-        ("Анкета_клиента", "ID_Анкеты"),
-        ("Коллекторское_агентство", "ID_Агентства"),
-        ("Документ_займа", "ID_Займа"),
-        ("Расписка", "ID_Расписки"),
-        ("Платёжный_документ", "ID_Платежа"),
-        ("План_выплат", "ID_Плана"),
+        ("Адрес", "ID_Адреса"), ("Тип_отделения", "ID_Типа"), ("Должность", "ID_Должности"),
+        ("Тип_начисления", "ID_Типа_начисления"), ("Категория_клиента", "ID_Категории"),
+        ("Отделение", "ID_Отделения"), ("Сотрудник", "ID_Сотрудника"), ("Клиент", "ID_Клиента"),
+        ("Анкета_клиента", "ID_Анкеты"), ("Коллекторское_агентство", "ID_Агентства"),
+        ("Документ_займа", "ID_Займа"), ("Расписка", "ID_Расписки"),
+        ("Платёжный_документ", "ID_Платежа"), ("План_выплат", "ID_Плана"),
         ("Договор_о_сотрудничестве", "ID_Договора")
     ]
+    
+    lines.append("DO $$")
+    lines.append("DECLARE")
+    lines.append("    actual_t text;")
+    lines.append("    actual_pk text;")
+    lines.append("    s text;")
+    lines.append("    m bigint;")
+    lines.append("BEGIN")
     for t, pk in tables_seqs:
-        lines.append(f"SELECT setval(pg_get_serial_sequence('{t}', '{pk}'), COALESCE((SELECT MAX({pk}) FROM {t}), 1));")
+        lines.append(f"    SELECT c.relname, a.attname INTO actual_t, actual_pk FROM pg_class c JOIN pg_attribute a ON c.oid = a.attrelid WHERE c.relname ILIKE '{t}' AND a.attname ILIKE '{pk}';")
+        lines.append(f"    s := pg_get_serial_sequence(actual_t, actual_pk);")
+        lines.append(f"    IF s IS NOT NULL THEN")
+        lines.append(f"        EXECUTE format('SELECT COALESCE(MAX(%I), 1) FROM %I', actual_pk, actual_t) INTO m;")
+        lines.append(f"        PERFORM setval(s, m);")
+        lines.append(f"    END IF;")
+    lines.append("END $$;")
 
     with open(OUT_FILE, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
