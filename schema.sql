@@ -13,6 +13,18 @@ DROP TABLE IF EXISTS Тип_начисления CASCADE;
 DROP TABLE IF EXISTS Должность CASCADE;
 DROP TABLE IF EXISTS Тип_отделения CASCADE;
 DROP TABLE IF EXISTS Адрес CASCADE;
+
+DROP TYPE IF EXISTS тип_выплат_enum CASCADE;
+DROP TYPE IF EXISTS текущий_статус_займа_enum CASCADE;
+DROP TYPE IF EXISTS способ_оплаты_enum CASCADE;
+DROP TYPE IF EXISTS статус_исполнения_плана_enum CASCADE;
+DROP TYPE IF EXISTS статус_договора_enum CASCADE;
+
+CREATE TYPE тип_выплат_enum AS ENUM ('Единовременный', 'По частям');
+CREATE TYPE текущий_статус_займа_enum AS ENUM ('Активен', 'Закрыт', 'Просрочен', 'Передан');
+CREATE TYPE способ_оплаты_enum AS ENUM ('Наличные', 'Карта', 'Перевод');
+CREATE TYPE статус_исполнения_плана_enum AS ENUM ('Ожидает', 'Оплачено', 'Просрочено');
+CREATE TYPE статус_договора_enum AS ENUM ('В работе', 'Исполнен', 'Расторгнут');
 CREATE TABLE Адрес (
     ID_Адреса SERIAL PRIMARY KEY,
     Город VARCHAR(100) NOT NULL,
@@ -24,24 +36,20 @@ CREATE TABLE Адрес (
 CREATE TABLE Тип_отделения (
     ID_Типа SERIAL PRIMARY KEY,
     Название VARCHAR(50) NOT NULL UNIQUE,
-    Макс_сумма DECIMAL(15, 2) NOT NULL CHECK (Макс_сумма > 0),
-    Код_типа SMALLINT NOT NULL UNIQUE
+    Макс_сумма DECIMAL(15, 2) NOT NULL CHECK (Макс_сумма > 0)
 );
 CREATE TABLE Должность (
     ID_Должности SERIAL PRIMARY KEY,
     Название VARCHAR(50) NOT NULL UNIQUE,
-    Штатный_код INT NOT NULL UNIQUE,
     Базовый_оклад DECIMAL(15, 2) NOT NULL CHECK (Базовый_оклад >= 0)
 );
 CREATE TABLE Тип_начисления (
     ID_Типа_начисления SERIAL PRIMARY KEY,
-    Название VARCHAR(50) NOT NULL UNIQUE,
-    Код SMALLINT NOT NULL UNIQUE
+    Название VARCHAR(50) NOT NULL UNIQUE
 );
 CREATE TABLE Категория_клиента (
     ID_Категории SERIAL PRIMARY KEY,
-    Название VARCHAR(50) NOT NULL UNIQUE,
-    Код SMALLINT NOT NULL UNIQUE
+    Название VARCHAR(50) NOT NULL UNIQUE
 );
 CREATE TABLE Отделение (
     ID_Отделения SERIAL PRIMARY KEY,
@@ -106,14 +114,12 @@ CREATE TABLE Документ_займа (
     ID_Займа SERIAL PRIMARY KEY,
     Дата_выдачи DATE NOT NULL,
     Сумма_займа DECIMAL(15, 2) NOT NULL CHECK (Сумма_займа > 0),
-    Тип_выплат VARCHAR(20) NOT NULL CHECK (Тип_выплат IN ('Единовременный', 'По частям')),
+    Тип_выплат тип_выплат_enum NOT NULL,
     Количество_дней SMALLINT NOT NULL CHECK (Количество_дней > 0),
     Крайняя_дата_возврата DATE NOT NULL,
     Процентная_ставка_день DECIMAL(5, 2) NOT NULL CHECK (Процентная_ставка_день >= 0),
     Пени_процент_день DECIMAL(5, 2) NOT NULL CHECK (Пени_процент_день >= 0),
-    Текущий_статус VARCHAR(20) NOT NULL DEFAULT 'Активен' CHECK (
-        Текущий_статус IN ('Активен', 'Закрыт', 'Просрочен', 'Передан')
-    ),
+    Текущий_статус текущий_статус_займа_enum NOT NULL DEFAULT 'Активен',
     ID_Клиента INT NOT NULL REFERENCES Клиент(ID_Клиента),
     ID_Отделения INT NOT NULL REFERENCES Отделение(ID_Отделения),
     ID_Бухгалтера INT NOT NULL REFERENCES Сотрудник(ID_Сотрудника),
@@ -136,9 +142,7 @@ CREATE TABLE Платёжный_документ (
     Дата_время_платежа TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     Назначение_платежа VARCHAR(200),
     Внесенная_сумма DECIMAL(15, 2) NOT NULL CHECK (Внесенная_сумма > 0),
-    Способ_оплаты VARCHAR(50) NOT NULL CHECK (
-        Способ_оплаты IN ('Наличные', 'Карта', 'Перевод')
-    ),
+    Способ_оплаты способ_оплаты_enum NOT NULL,
     ID_Клиента INT NOT NULL REFERENCES Клиент(ID_Клиента),
     ID_Кассира INT NOT NULL REFERENCES Сотрудник(ID_Сотрудника)
 );
@@ -148,9 +152,7 @@ CREATE TABLE План_выплат (
     Остаток_погашения_основы DECIMAL(15, 2) NOT NULL CHECK (Остаток_погашения_основы >= 0),
     Остаток_погашения_процентов DECIMAL(15, 2) NOT NULL CHECK (Остаток_погашения_процентов >= 0),
     Остаток_погашения_штрафа DECIMAL(15, 2) NOT NULL DEFAULT 0 CHECK (Остаток_погашения_штрафа >= 0),
-    Статус_исполнения VARCHAR(20) NOT NULL DEFAULT 'Ожидает' CHECK (
-        Статус_исполнения IN ('Ожидает', 'Оплачено', 'Просрочено')
-    ),
+    Статус_исполнения статус_исполнения_плана_enum NOT NULL DEFAULT 'Ожидает',
     ID_Займа INT NOT NULL REFERENCES Документ_займа(ID_Займа),
     ID_Бухгалтера INT NOT NULL REFERENCES Сотрудник(ID_Сотрудника),
     ID_Платежа INT REFERENCES Платёжный_документ(ID_Платежа),
@@ -160,9 +162,7 @@ CREATE TABLE Договор_о_сотрудничестве (
     ID_Договора SERIAL PRIMARY KEY,
     Регистрационный_номер VARCHAR(50) NOT NULL UNIQUE,
     Дата_подписания DATE NOT NULL,
-    Статус_договора VARCHAR(20) NOT NULL DEFAULT 'В работе' CHECK (
-        Статус_договора IN ('В работе', 'Исполнен', 'Расторгнут')
-    ),
+    Статус_договора статус_договора_enum NOT NULL DEFAULT 'В работе',
     ID_Займа INT NOT NULL UNIQUE REFERENCES Документ_займа(ID_Займа),
     ID_Агентства INT NOT NULL REFERENCES Коллекторское_агентство(ID_Агентства),
     ID_Бухгалтера INT NOT NULL REFERENCES Сотрудник(ID_Сотрудника),
