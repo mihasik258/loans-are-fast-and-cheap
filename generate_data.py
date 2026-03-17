@@ -199,17 +199,21 @@ def generate():
         loan_overdue = False
         loan_transferred = False
         
+        rem_principal = amt
+        
         for p in range(np):
             is_last = (p == np - 1)
             b = last_base_amt if is_last else base_amt
             
             if loan_type == "Единовременный":
                 plan_d = ret_date
+                step_days = days
             else:
                 step_days = days / np
                 plan_d = loan_date + timedelta(days=int(step_days * (p + 1)))
                 
-            pct = round(b * pct_rate * (days/np) / 100, 2)
+            pct = round(rem_principal * pct_rate * step_days / 100, 2)
+            rem_principal -= b
             
             curr = plan_d.replace(hour=0, minute=0, second=0)
             now = datetime.now()
