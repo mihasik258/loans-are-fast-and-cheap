@@ -201,6 +201,17 @@ def generate():
         
         rem_principal = amt
         
+        # Определяем "поведение" плательщика один раз на весь займ:
+        rand_val = random.random()
+        if rand_val < 0.8:
+            payer_type = "GOOD"
+        elif rand_val < 0.95:
+            payer_type = "OVERDUE"
+        else:
+            payer_type = "TRANSFERRED"
+            
+        overdue_starts_at_step = random.randint(0, np-1) if payer_type != "GOOD" else -1
+
         for p in range(np):
             is_last = (p == np - 1)
             b = last_base_amt if is_last else base_amt
@@ -213,7 +224,6 @@ def generate():
                 plan_d = loan_date + timedelta(days=int(step_days * (p + 1)))
                 
             pct = round(rem_principal * pct_rate * step_days / 100, 2)
-            rem_principal -= b
             
             curr = plan_d.replace(hour=0, minute=0, second=0)
             now = datetime.now()
@@ -222,34 +232,34 @@ def generate():
             pid = None
             pen = 0
             
-            if curr < now:
-                if random.random() < 0.8:
+            if curr <= now:
+                if payer_type == "GOOD" or p < overdue_starts_at_step:
                     st = "Оплачено"
                 else:
                     st = "Просрочено"
                     pen = round(b * pen_rate * (now - curr).days / 100, 2)
             else:
-                if random.random() < 0.1:
-                    st = "Оплачено"
+                st = "Ожидает"
             
             if st == "Оплачено":
-                pay_d = rand_date(loan_date, plan_d)
-                pay_amt = round(b + pct + pen, 2)
-                if np > 1:
-                    purpose = f"Погашение по займу №{loan_id} (часть {p+1} из {np})"
-                else:
-                    purpose = f"Единовременное полное погашение по займу №{loan_id}"
+                # Никаких генераций рандомных дат! Идеально платит в день плана:
+                pay_d = curr
+                pay_amt = round(b + pct, 2) # Пени нет, так как платит в срок
                 
                 pays.append((f"КВТ-{pay_id:06d}", pay_d.strftime("%Y-%m-%d %H:%M:%S"),
-                             purpose, pay_amt, random.choice(PAY_METHODS), cl_id, csh))
+                             "Погашение по плану", pay_amt, random.choice(PAY_METHODS), cl_id, csh))
                 pid = pay_id
                 pay_id += 1
+                
+                # Уменьшаем тело долга ТОЛЬКО если платеж был совершен
+                rem_principal -= b
             else:
                 loan_fully_paid = False
                 if st == "Просрочено":
                     loan_overdue = True
-                    if random.random() < 0.3:
+                    if payer_type == "TRANSFERRED":
                         loan_transferred = True
+                        
             plans.append((plan_d.strftime("%Y-%m-%d"), b, pct, pen, st, loan_id, acc, pid, 1))
             plan_id += 1
             
