@@ -1,3 +1,5 @@
+SET client_min_messages = warning;
+
 DROP TABLE IF EXISTS Договор_о_сотрудничестве CASCADE;
 DROP TABLE IF EXISTS План_выплат CASCADE;
 DROP TABLE IF EXISTS Платёжный_документ CASCADE;
