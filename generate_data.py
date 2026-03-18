@@ -200,8 +200,6 @@ def generate():
         loan_transferred = False
         
         rem_principal = amt
-        
-        # Определяем "поведение" плательщика один раз на весь займ:
         rand_val = random.random()
         if rand_val < 0.8:
             payer_type = "GOOD"
@@ -242,7 +240,6 @@ def generate():
                 st = "Ожидает"
             
             if st == "Оплачено":
-                # Никаких генераций рандомных дат! Идеально платит в день плана:
                 pay_d = curr
                 pay_amt = round(b + pct, 2) # Пени нет, так как платит в срок
                 
