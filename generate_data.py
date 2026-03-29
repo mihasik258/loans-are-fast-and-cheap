@@ -100,7 +100,7 @@ def generate():
     emps = []
     for i in range(N_EMPLOYEE):
         ln, fn, mn = rand_person()
-        pos = (i % 3) + 1 # 1=Директор, 2=Бухгалтер, 3=Кассир
+        pos = (i % 3) + 1
         br = (i % N_BRANCH) + 1
         mgr = 1 if pos != 1 else None
         hired = rand_date(datetime(2020,1,1), datetime(2023,1,1))
@@ -170,10 +170,17 @@ def generate():
         br_id = prof[3]
         prof_date = datetime.strptime(prof[1], "%Y-%m-%d")
         
-        loan_date = rand_date(prof_date + timedelta(days=1), datetime.now() - timedelta(days=100))
-        amt = round(random.choice([10000, 25000, 50000, 75000, 100000, 250000, 500000]), 2)
-        loan_type = random.choice(["Единовременный", "По частям"])
-        days = random.choice([14, 30, 60, 90, 180, 360])
+        amt = random.choice([10000, 20000, 30000, 50000, 100000, 150000, 300000])
+        loan_type = random.choices(["Единовременный", "По частям"], weights=[0.2, 0.8])[0]
+        is_recent = (i >= 150 - 45)
+        if is_recent:
+            loan_date = datetime.now() - timedelta(days=random.randint(2, 45))
+            days = random.choice([30, 60, 90, 120])
+            loan_type = "По частям"
+        else:
+            loan_date = rand_date(datetime(2010, 1, 1), datetime.now() - timedelta(days=60))
+            days = random.choice([30, 60, 90, 180, 360])
+            
         ret_date = loan_date + timedelta(days=days)
         pct_rate = round(random.uniform(0.5, 2.0), 2)
         pen_rate = round(random.uniform(1.0, 5.0), 2)
@@ -190,7 +197,10 @@ def generate():
                      loan_date.strftime("%Y-%m-%d"), True, loan_id, cl_id, csh))
                      
         np = 1 if loan_type == "Единовременный" else (days // 30 if days >= 30 else 2)
-        if np == 0: np = 1
+        if is_recent:
+            freq = random.choice([1, 7, 14, 30])
+            np = days // freq if days >= freq else 1
+        if np <= 0: np = 1
         
         base_amt = round(amt / np, 2)
         last_base_amt = round(amt - (base_amt * (np - 1)), 2)
@@ -241,14 +251,12 @@ def generate():
             
             if st == "Оплачено":
                 pay_d = curr
-                pay_amt = round(b + pct, 2) # Пени нет, так как платит в срок
+                pay_amt = round(b + pct, 2)
                 
                 pays.append((f"КВТ-{pay_id:06d}", pay_d.strftime("%Y-%m-%d %H:%M:%S"),
                              "Погашение по плану", pay_amt, random.choice(PAY_METHODS), cl_id, csh))
                 pid = pay_id
                 pay_id += 1
-                
-                # Уменьшаем тело долга ТОЛЬКО если платеж был совершен
                 rem_principal -= b
             else:
                 loan_fully_paid = False
