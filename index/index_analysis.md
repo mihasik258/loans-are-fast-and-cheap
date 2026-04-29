@@ -507,7 +507,7 @@ CREATE INDEX
 | **Скан `План_выплат`**    | Seq Scan           | **Index Scan** `idx_план_займ_дата_статус` | —                  | —                                                                          |
 | **Скан `Документ_займа`** | Seq Scan           | Index Scan                                 | Seq Scan (×3)      | **Index Only Scan** `idx_заём_клиент_дата_covering` (×2) + Index Scan (×1) |
 | **Стратегия JOIN**        | Hash Join          | **Merge Join**                             | Hash Join          | **Merge Join / Nested Loop Left Join**                                     |
-| **shared hit**            | 30                 | 225 + read=4                               | 166                | 465                                                                        |
+
 
 | Метрика                   | Запрос 2 ДО   | Запрос 2 ПОСЛЕ           | Запрос 4 ДО   | Запрос 4 ПОСЛЕ           |
 | ------------------------- | ------------- | ------------------------ | ------------- | ------------------------ |
@@ -515,7 +515,6 @@ CREATE INDEX
 | **Скан `План_выплат`**    | Seq Scan      | **Index Scan**           | —             | —                        |
 | **Скан `Документ_займа`** | Seq Scan (×3) | **Index Only Scan (×3)** | Seq Scan (×3) | **Index Only Scan (×3)** |
 | **Стратегия JOIN**        | Hash Join     | **Merge Join**           | Hash Join     | **Merge Join**           |
-| **Heap Fetch**            | да            | да                       | да            | нет                      |
 
 ---
 
